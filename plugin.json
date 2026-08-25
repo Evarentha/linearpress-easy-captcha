@@ -1,0 +1,14 @@
+{
+  "id": "easy-captcha",
+  "name": "人机验证",
+  "version": "1.0.0",
+  "description": "为登录、注册与评论提供人机验证：普通 PNG 文本验证码（复杂度/变形/字符数/字符集可调）或 Cloudflare Turnstile，验证码错误次数超限自动封禁账号。",
+  "author": "LinearPress",
+  "type": "both",
+  "main": "index.ts",
+  "runtime": "cordis",
+  "views": "views",
+  "public": "public",
+  "styles": ["easy-captcha.css?v=1.0.0"],
+  "scripts": ["easy-captcha.js?v=1.0.0"]
+}

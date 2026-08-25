@@ -1,0 +1,84 @@
+<!--
+  Author: MoyuZJ
+  Team: LinearTeam
+  Contact: linearteam@foxmail.com
+  人机验证 · 设置表单：验证方式（文本验证码 / Cloudflare Turnstile）+ 错误次数与封禁。
+-->
+
+<div class="ec-settings">
+  <div class="page-head">
+    <h1>人机验证 · 设置</h1>
+    <p class="ec-sub">为登录、注册与评论提供人机验证；保存后即时生效，无需重启。</p>
+  </div>
+  <% const notices = { 'saved': '设置已保存（即时生效）。', 'reset': '已恢复默认设置。' }; %>
+  <% if (notice && notices[notice]) { %><p class="notice notice-ok"><%= notices[notice] %></p><% } else if (notice && !notices[notice]) { %><p class="notice notice-error"><%= notice %></p><% } %>
+  <% if (!ready) { %><p class="notice notice-error">当前验证方式尚未就绪：Turnstile 需要同时填写站点 ID 与密钥，否则所有场景将跳过校验。</p><% } %>
+
+  <form method="post" action="<%= settingsUrl %>">
+    <div class="ec-panel">
+      <h2>① 总开关与保护场景</h2>
+      <label class="ec-switch"><input type="checkbox" name="enabled" <%= config.enabled ? 'checked' : '' %>> <span>启用人机验证</span></label>
+      <label class="ec-switch"><input type="checkbox" name="protect_login" <%= config.protectLogin ? 'checked' : '' %>> <span>校验登录（任何人登录都需人机验证）</span></label>
+      <label class="ec-switch"><input type="checkbox" name="protect_register" <%= config.protectRegister ? 'checked' : '' %>> <span>校验注册</span></label>
+      <label class="ec-switch"><input type="checkbox" name="protect_comment" <%= config.protectComment ? 'checked' : '' %>> <span>校验评论（注册用户与游客皆校验）</span></label>
+    </div>
+
+    <div class="ec-panel">
+      <h2>② 验证方式</h2>
+      <div class="ec-method">
+        <label><input type="radio" name="method" value="text" <%= config.method === 'text' ? 'checked' : '' %>> 普通文本验证码</label>
+        <label><input type="radio" name="method" value="turnstile" <%= config.method === 'turnstile' ? 'checked' : '' %>> Cloudflare Turnstile</label>
+      </div>
+
+      <div class="ec-panel" style="border-color:#e4e4e7;background:#fafafa">
+        <p class="eyebrow">文本验证码参数</p>
+        <div class="ec-row-inputs">
+          <div class="ec-field"><label>文本个数（字符数）</label><input type="number" name="captcha_length" value="<%= config.text.length %>" min="1" max="8"></div>
+          <div class="ec-field"><label>复杂程度</label>
+            <select name="captcha_complexity">
+              <option value="1" <%= config.text.complexity === 1 ? 'selected' : '' %>>低（干扰点/线较少）</option>
+              <option value="2" <%= config.text.complexity === 2 ? 'selected' : '' %>>中</option>
+              <option value="3" <%= config.text.complexity === 3 ? 'selected' : '' %>>高（干扰点/线很多）</option>
+            </select>
+          </div>
+          <div class="ec-field"><label>变形程度</label>
+            <select name="captcha_distortion">
+              <option value="1" <%= config.text.distortion === 1 ? 'selected' : '' %>>低（轻微扭曲）</option>
+              <option value="2" <%= config.text.distortion === 2 ? 'selected' : '' %>>中</option>
+              <option value="3" <%= config.text.distortion === 3 ? 'selected' : '' %>>高（强烈扭曲）</option>
+            </select>
+          </div>
+          <div class="ec-field"><label>文本类型</label>
+            <select name="captcha_charset">
+              <option value="both" <%= config.text.charset === 'both' ? 'selected' : '' %>>数字 + 字母</option>
+              <option value="number" <%= config.text.charset === 'number' ? 'selected' : '' %>>仅数字</option>
+              <option value="letter" <%= config.text.charset === 'letter' ? 'selected' : '' %>>仅英文字母</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ec-panel" style="border-color:#e4e4e7;background:#fafafa">
+        <p class="eyebrow">Cloudflare Turnstile</p>
+        <p class="ec-desc">在 Cloudflare Dashboard 创建站点后获取站点 ID 与密钥；是否弹出验证码由 Cloudflare 决定（无感通过时不要求用户操作）。</p>
+        <div class="ec-field"><label>站点 ID（Site Key）</label><input type="text" name="turnstile_site_key" value="<%= config.turnstile.siteKey %>" placeholder="0x4AAAAAA... 开头" autocomplete="off"></div>
+        <div class="ec-field"><label>站点密钥（Secret Key，仅服务端使用）</label><input type="password" name="turnstile_secret_key" value="<%= config.turnstile.secretKey %>" placeholder="留空保持不变" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="ec-panel">
+      <h2>③ 错误次数与封禁</h2>
+      <p class="ec-desc">验证码错误次数达到上限即暂时封禁该主体：登录按用户名、注册按尝试的用户名、评论按用户 ID（游客按 IP）。封禁期内即使验证码正确也拒绝提交；验证码输入正确会清零计数。</p>
+      <div class="ec-row-inputs">
+        <div class="ec-field"><label>错误次数上限（次）</label><input type="number" name="max_failures" value="<%= config.maxFailures %>" min="1"></div>
+        <div class="ec-field"><label>封禁时长（分钟）</label><input type="number" name="ban_minutes" value="<%= config.banMinutes %>" min="1"></div>
+      </div>
+    </div>
+
+    <div class="ec-actions">
+      <button type="submit">保存设置</button>
+      <button type="submit" class="ec-reset" formaction="<%= settingsUrl %>/reset" formnovalidate>恢复默认</button>
+      <% if (ready) { %><span class="ec-status ec-ok">当前验证方式已就绪</span><% } else { %><span class="ec-status ec-warn">验证方式未就绪</span><% } %>
+    </div>
+  </form>
+</div>
