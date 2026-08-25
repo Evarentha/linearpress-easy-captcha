@@ -39,9 +39,16 @@
 
   function attach(form) {
     if (form.querySelector('.ec-box')) return;
-    const submit = form.querySelector('button[type="submit"], .button[type="submit"], button, .button') || null;
+    // 提交按钮优先：避免命中表单内其它按钮（如 advanced-comments 的表情按钮）。
+    const submit = form.querySelector('button[type="submit"], input[type="submit"], .button[type="submit"]') || null;
     if (config.method === 'turnstile') attachTurnstile(form, submit);
     else attachText(form, submit);
+  }
+
+  /** 把验证码区块插入提交按钮之前；父节点式插入避免深层 ref 的兼容问题。 */
+  function placeBox(form, submit, box) {
+    if (submit && submit.parentNode) submit.parentNode.insertBefore(box, submit);
+    else form.appendChild(box);
   }
 
   /* ---------------- 普通文本验证码 ---------------- */
@@ -73,7 +80,7 @@
       hint.hidden = false;
     });
 
-    if (submit) form.insertBefore(box, submit);
+    if (submit) placeBox(form, submit, box);
     else form.appendChild(box);
   }
 
@@ -88,7 +95,7 @@
     const widget = box.querySelector('.ec-turnstile-widget');
     const hidden = box.querySelector('input[name="' + TURNSTILE_FIELD + '"]');
 
-    if (submit) form.insertBefore(box, submit);
+    if (submit) placeBox(form, submit, box);
     else form.appendChild(box);
 
     loadTurnstileScript()
