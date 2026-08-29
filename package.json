@@ -1,0 +1,26 @@
+{
+  "name": "@evarentha/linearpress-easy-captcha",
+  "version": "1.0.0",
+  "private": false,
+  "description": "为登录、注册与评论提供人机验证：普通 PNG 文本验证码（复杂度/变形/字符数/字符集可调）或 Cloudflare Turnstile，验证码错误次数超限自动封禁账号。",
+  "type": "module",
+  "main": "index.ts",
+  "files": [
+    "index.ts",
+    "plugin.json",
+    "src",
+    "views",
+    "public",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "linearpress",
+    "plugin",
+    "easy-captcha"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
