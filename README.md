@@ -1,39 +1,50 @@
-/*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
- */
+<!--
+  Author: MoyuZJ
+  Team: LinearTeam
+  Contact: linearteam@foxmail.com
+  Made by MoyuZJ in China with ♥
+-->
 
-# Easy Captcha（人机验证）
+# 人机验证（easy-captcha）
 
-为登录、注册与评论提供人机验证，验证方式二选一：
+为 LinearPress 的**登录、注册与评论**提供人机验证：普通 PNG 文本验证码（服务端生成，零依赖）
+或 **Cloudflare Turnstile**；验证码错误次数超限自动阶梯封禁。
 
-- **普通文本验证码**：服务端生成 PNG 位图（内置笔画字体 + 手写 PNG 编码，无外部依赖）。
-  图片的复杂程度（干扰点/干扰线数量）、变形程度（字符旋转/倾斜/位移）、文本个数（字符数）
-  与文本类型（仅数字 / 仅英文字母 / 两者）均可调节；图片接口按 IP 限流 10 次/秒防滥用。
-- **Cloudflare Turnstile**：填入站点 ID（Site Key）与密钥（Secret Key）后，是否弹出验证码由 Cloudflare 决定。
+> 本仓库是 LinearPress 插件 **easy-captcha** 的独立开发仓库。插件即 Cordis 插件函数，即插即用、可停用可卸载。
 
-启用后，登录、注册、评论（任何人）在提交时都必须通过人机验证；校验在服务端中间件强制执行，
-绕过表单前端直接 POST 同样会被拦截。
+## 插件化的优势
 
-## 错误次数与封禁
+- **中间件强制校验**：校验在服务端中间件执行，隔着表单直接 POST 同样被拦截；不需要改核心认证/评论路由。
+- **前端免改造**：验证码 UI 由注入的脚本按 `form[action=…]` 自动挂到登录/注册/评论表单，主题只要保证表单里有提交按钮锚点即可（Fluent 主题等已兼容）。
+- **可叠加 2FA/SSO**：与 easy-2fa、oidc-sso 走不同路由/时序，互不冲突（SSO 回调不经人机验证）。
 
-验证码错误次数达到上限（默认 5 次）即封禁该主体 10 分钟：
+## 功能
 
-- 登录：按「用户名」封禁；
-- 注册：按「尝试注册的用户名」封禁；
-- 评论：登录用户按「用户 ID」封禁，游客按「来源 IP」封禁。
+- **普通文本验证码**：服务端生成 PNG（内置笔画字体 + 手写 PNG 编码，无外部依赖），复杂度（干扰点/线）、变形（旋转/倾斜/位移）、字符数与字符集（数字/字母/混合）均可调；图片接口按 IP 限流 10 次/秒。
+- **Cloudflare Turnstile**：填 Site Key / Secret Key 后由 Cloudflare 决定是否弹出验证码。
+- **错误次数与封禁**：默认错误 5 次封禁 10 分钟——登录按用户名、注册按注册名、评论登录用户按 ID / 游客按 IP；上限与时长后台可调，输入正确清零计数。
 
-错误次数上限与封禁时长均可在插件设置中调整；验证码输入正确会清零对应计数。
+## 安装
 
-## 使用方式
+```bash
+# 方式一：工作区同步
+cd base && sh scripts/sync-plugins.sh easy-captcha
 
-1. 在 `Plugins/` 工作区开发，`npm run sync` 同步到 `src/plugins/easy-captcha`。
-2. 后台「插件」页启用本插件。
-3. 打开「人机验证」设置页：选择验证方式、配置参数并保存（无需重启，即时生效）。
+# 方式二：克隆到运行目录（目录名必须等于插件 id）
+git clone <本仓库地址> src/plugins/easy-captcha
+```
 
-Turnstile 需要在 [Cloudflare Dashboard](https://dash.cloudflare.com/) 创建站点并获取 Site Key / Secret Key。
+启用后进入后台「人机验证」设置页配置（无需重启，即时生效）。Turnstile 需到 [Cloudflare Dashboard](https://dash.cloudflare.com/) 创建站点获取密钥。
+
+## 本地开发：怎么拉 / 怎么改 / 怎么跑
+
+```bash
+git clone <本仓库地址> LinearPress/Plugins/easy-captcha
+cd LinearPress/base
+npm install && npm run db:init
+sh scripts/sync-plugins.sh easy-captcha
+npm run dev
+```
 
 ## 目录结构
 
@@ -43,13 +54,16 @@ easy-captcha/
 ├── plugin.json             # 清单
 ├── types/session.d.ts      # Session 扩展声明（验证码答案）
 ├── src/
-│   ├── captcha.ts          # SVG 文本验证码生成
+│   ├── captcha.ts          # PNG 文本验证码生成
 │   ├── config.ts           # 配置模型：默认值 + 归一化 + 读写
 │   ├── store.ts            # 错误计数 / 封禁记录（基础设施 SQLite）
 │   └── turnstile.ts        # Cloudflare Turnstile siteverify
 ├── public/                 # 前端注入脚本与样式
-│   ├── easy-captcha.css
-│   └── easy-captcha.js
 └── views/admin/            # 后台设置页
-    └── easy-captcha.ejs
 ```
+
+## 贡献与发布
+
+- conventional commits；提交前 `cd base && npm run typecheck`
+- 版本：`git tag v1.0.0 && git push --tags`
+- License：MIT（见仓库 LICENSE）
