@@ -36,7 +36,7 @@ Human-verification for LinearPress **login, registration and comments**：server
 cd base && sh scripts/sync-plugins.sh easy-captcha
 
 # Option 2 — clone into runtime dir（目录名必须等于插件 id）
-git clone https://github.com/Averithen/linearpress-easy-captcha src/plugins/easy-captcha
+git clone https://github.com/Evarentha/linearpress-easy-captcha src/plugins/easy-captcha
 ```
 
 Configure via admin「人机验证」page（applies instantly）. Turnstile keys from [Cloudflare Dashboard](https://dash.cloudflare.com/).
@@ -44,7 +44,7 @@ Configure via admin「人机验证」page（applies instantly）. Turnstile keys
 ## Local Development / 本地开发：怎么拉 / 怎么改 / 怎么跑
 
 ```bash
-git clone https://github.com/Averithen/linearpress-easy-captcha LinearPress/Plugins/easy-captcha
+git clone https://github.com/Evarentha/linearpress-easy-captcha LinearPress/Plugins/easy-captcha
 cd LinearPress/base
 npm install && npm run db:init
 sh scripts/sync-plugins.sh easy-captcha
