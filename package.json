@@ -1,0 +1,32 @@
+{
+  "name": "@evarentha/linearpress-easy-captcha",
+  "version": "3.0.0",
+  "description": "为登录、注册与评论提供人机验证：普通 PNG 文本验证码（复杂度/变形/字符数/字符集可调）或 Cloudflare Turnstile，验证码错误次数超限自动封禁账号。",
+  "type": "module",
+  "main": "index.ts",
+  "license": "GPL-3.0-or-later",
+  "author": "MoyuZJ <moyuzj@moyuzj.cn> (https://moyuzj.cn)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Evarentha/linearpress-easy-captcha.git"
+  },
+  "keywords": [
+    "linearpress",
+    "plugin",
+    "evarentha",
+    "easy-captcha"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "peerDependencies": {
+    "linearpress": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/Evarentha/linearpress-easy-captcha#readme",
+  "bugs": {
+    "url": "https://github.com/Evarentha/linearpress-easy-captcha/issues"
+  }
+}
