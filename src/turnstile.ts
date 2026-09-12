@@ -1,15 +1,24 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Cloudflare Turnstile Server-Side Verifier
+ *
+ * Confirms Turnstile challenge tokens against Cloudflare's siteverify endpoint.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * Cloudflare Turnstile 服务端校验。
+ * Cloudflare Turnstile server-side verification.
  *
- * 前端 token 通过挑战后回传，此处以站点密钥调用 siteverify 接口确认有效性。
- * 是否弹出验证码由 Cloudflare 决定（Turnstile 无感通过时不要求用户操作）。
+ * <p>The front end sends back a token after passing the challenge; this module confirms its
+ * validity by calling the siteverify endpoint with the site secret key. Whether a captcha is
+ * shown at all is decided by Cloudflare (when Turnstile passes silently, no user action is
+ * required).</p>
+ *
+ * @since 1.0.0
  */
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -23,7 +32,8 @@ export async function verifyTurnstile(secret: string, token: string, remoteIp?: 
     const response = await fetch(SITEVERIFY_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body
+      body,
+      signal: AbortSignal.timeout(10_000)
     });
     const data = await response.json() as { success?: boolean };
     return { success: Boolean(data.success) };

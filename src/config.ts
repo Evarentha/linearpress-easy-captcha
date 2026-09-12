@@ -1,16 +1,24 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Easy Captcha Configuration Model
+ *
+ * Defines the plugin's config schema, defaults, normalization, and settings-form parsing.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * 人机验证插件配置模型。
+ * Configuration model of the human-verification plugin.
  *
- * 配置整体以 JSON 保存在插件注册表（ctx.plugins.getConfig/setConfig），
- * 提供默认值 + 浅层合并，保证字段缺失时行为可预期（与 advanced-user-management 一致）。
- * 本模块不依赖 Base 内部实现，只依赖 cordis Context 暴露的 plugins 服务。
+ * <p>The whole config is persisted as JSON in the plugin registry (ctx.plugins.getConfig/setConfig)
+ * with defaults + shallow merge, so behavior stays predictable when fields are missing (consistent
+ * with advanced-user-management). This module does not depend on Base internals; it only relies on
+ * the plugins service exposed by the cordis Context.</p>
+ *
+ * @since 1.0.0
  */
 
 /** 插件注册表配置服务的最小接口（由 ctx.plugins 满足）。 */

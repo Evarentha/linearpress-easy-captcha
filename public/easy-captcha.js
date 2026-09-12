@@ -1,8 +1,25 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Easy Captcha Front-End Injector
+ *
+ * Dynamically injects captcha widgets into login, register, and comment forms.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/**
+ * Client-side runtime for the easy-captcha plugin.
+ *
+ * <p>Reads the public config (no secrets) from /plugins/easy-captcha/config, then injects a
+ * captcha box into the login / register / comment forms: a text-captcha image with a refresh
+ * button and answer input, or an explicitly rendered Cloudflare Turnstile widget whose token is
+ * copied into a hidden field on submit. Theme views are never overridden, and server-side
+ * middleware still enforces verification if this script fails to load.</p>
+ *
+ * @since 1.0.0
  */
 
 (() => {

@@ -1,8 +1,24 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Easy Captcha Front-End Styles
+ *
+ * Styles the captcha widget injected into forms and the admin settings page.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/*
+ * Front-end styles for the easy-captcha plugin.
+ *
+ * Covers the captcha box injected into the login / register / comment forms
+ * (.ec-box image, refresh button, answer input, Turnstile widget, hint) and
+ * the admin settings page at admin/easy-captcha (.ec-settings panels,
+ * switches, method radios, status pills, and actions).
+ *
+ * @since 1.0.0
  */
 
 /* ---------------- 人机验证注入块（登录 / 注册 / 评论表单） ---------------- */

@@ -1,19 +1,30 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Captcha Failure Counter and Ban Store
+ *
+ * Tracks wrong-captcha counts and temporary bans in the plugin's local infrastructure database.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * 验证码错误计数与封禁记录。
+ * Captcha failure counts and ban records.
  *
- * 数据存放在插件的本地基础设施库（ctx.linearpress.db），与业务数据库（可能被
- * MySQL 驱动替换）解耦；即使切换数据库驱动，人机验证状态仍留在本地。
+ * <p>Data lives in the plugin's local infrastructure database (ctx.linearpress.db), decoupled from
+ * the business database (which may be swapped to the MySQL driver); even if the database driver is
+ * changed, human-verification state stays local.</p>
  *
- * 语义（时间戳均为 Date.now() 毫秒值）：
- *  - fails：当前累计的验证码错误次数，验证通过即清零；
- *  - banUntil：非空且大于当前时间时，该主体被暂时封禁（拒绝一切验证，即使输入正确）。
+ * Semantics (all timestamps are Date.now() milliseconds):
+ * <ul>
+ * <li>fails — currently accumulated wrong-captcha count; reset to zero once verification passes.</li>
+ * <li>banUntil — when non-null and greater than the current time, the subject is temporarily
+ * banned (all verification attempts rejected, even with correct input).</li>
+ * </ul>
+ *
+ * @since 1.0.0
  */
 
 export interface CaptchaDb {
@@ -21,6 +32,7 @@ export interface CaptchaDb {
   prepare(sql: string): {
     run(...params: unknown[]): { changes?: number | bigint; lastInsertRowid?: number | bigint };
     get(...params: unknown[]): unknown;
+    all(...params: unknown[]): unknown[];
   };
 }
 
@@ -32,8 +44,11 @@ export function ensureSchema(db: CaptchaDb): void {
   db.exec(`CREATE TABLE IF NOT EXISTS ec_attempts (
     scope TEXT PRIMARY KEY,
     fails INTEGER NOT NULL DEFAULT 0,
-    ban_until INTEGER
+    ban_until INTEGER,
+    last_fail INTEGER
   );`);
+  const columns = db.prepare("PRAGMA table_info('ec_attempts')").all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === 'last_fail')) db.exec('ALTER TABLE ec_attempts ADD COLUMN last_fail INTEGER');
 }
 
 export function getAttempt(db: CaptchaDb, scope: string): AttemptRow {
@@ -42,9 +57,9 @@ export function getAttempt(db: CaptchaDb, scope: string): AttemptRow {
   return { fails: Number(row.fails ?? 0), banUntil: row.ban_until ? Number(row.ban_until) : null };
 }
 
-/** 记录一次失败并返回累计次数（首次自动创建行）。 */
-export function recordFailure(db: CaptchaDb, scope: string): number {
-  db.prepare('INSERT INTO ec_attempts(scope, fails) VALUES(?, 1) ON CONFLICT(scope) DO UPDATE SET fails = ec_attempts.fails + 1').run(scope);
+/** 记录一次失败并返回累计次数（首次自动创建行；now 写入 last_fail 活跃时间戳）。 */
+export function recordFailure(db: CaptchaDb, scope: string, now: number): number {
+  db.prepare('INSERT INTO ec_attempts(scope, fails, last_fail) VALUES(?, 1, ?) ON CONFLICT(scope) DO UPDATE SET fails = ec_attempts.fails + 1, last_fail = excluded.last_fail').run(scope, now);
   const row = db.prepare('SELECT fails FROM ec_attempts WHERE scope=?').get(scope) as { fails?: number } | undefined;
   return Number(row?.fails ?? 1);
 }
@@ -59,10 +74,10 @@ export function clearScope(db: CaptchaDb, scope: string): void {
   db.prepare('DELETE FROM ec_attempts WHERE scope=?').run(scope);
 }
 
-/** 清理过期封禁且长期无活动的行（由 Effect 定时调用，防止表膨胀）。 */
+/** 清理陈旧行（由 Effect 定时调用，防止表膨胀）。 */
 export function sweepExpired(db: CaptchaDb, now: number): void {
-  // 封禁已过期超过 24 小时且计数为 0 的行可安全删除；计数仍>0 说明窗口内仍在重试，保留。
-  db.prepare('DELETE FROM ec_attempts WHERE ban_until IS NOT NULL AND ban_until < ? AND fails = 0').run(now - 24 * 60 * 60 * 1000);
+  // 24 小时内无失败记录且无生效封禁的行可安全删除（含一次性攻击者留下的残留计数）。
+  db.prepare('DELETE FROM ec_attempts WHERE (last_fail IS NULL OR last_fail < ?) AND (ban_until IS NULL OR ban_until < ?)').run(now - 24 * 60 * 60 * 1000, now);
 }
 
 /** 人类可读的剩余封禁时长（分钟），如「5 分钟」/「2 小时 3 分钟」。 */

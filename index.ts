@@ -1,23 +1,35 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Easy Captcha Plugin Entry Point
+ *
+ * Cordis plugin that adds human verification to login, registration, and comment scenarios.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * 人机验证插件入口（Cordis 原生插件，export default 即 activate 阶段）。
+ * Entry point of the human-verification plugin (a Cordis native plugin; export default is the activate phase).
  *
- * 功能：
- *  1. 普通文本验证码：PNG 位图（无依赖，内置笔画字体 + 手写 PNG 编码），
- *     复杂程度 / 变形程度 / 文本个数 / 文本类型可调；图片接口按 IP 限流 10 次/秒防滥用。
- *  2. Cloudflare Turnstile：站点 ID + 密钥，是否弹出验证码由 Cloudflare 决定。
- *  3. 覆盖登录 / 注册 / 评论三个场景；服务端中间件强制校验，绕过表单直接 POST 同样拦截。
- *  4. 验证码错误次数达到阈值（默认 5 次）即封禁该主体（默认 10 分钟），可调。
+ * Features:
+ * <ul>
+ * <li>Plain text captcha: PNG bitmap (zero dependencies; built-in stroke font and handwritten PNG
+ *     encoder) with adjustable complexity / distortion / length / charset; the image endpoint is
+ *     rate-limited to 10 requests per second per IP to prevent abuse.</li>
+ * <li>Cloudflare Turnstile: site key + secret key; whether a challenge pops up is decided by Cloudflare.</li>
+ * <li>Covers the login / register / comment scenarios; verification is enforced by server-side
+ *     middleware, so POSTs that bypass the form are intercepted all the same.</li>
+ * <li>Once wrong captcha attempts reach the threshold (default 5), the subject is temporarily
+ *     banned (default 10 minutes); both values are adjustable.</li>
+ * </ul>
  *
- * 前端 UI 由 public/easy-captcha.js 动态注入（不覆盖主题视图，避免与其他插件冲突）；
- * 校验在 web.middleware 中强制执行，位于业务路由之前，与 advanced-user-management
- * 对 /login 的路由覆盖互不干扰。
+ * <p>The front-end UI is injected dynamically by public/easy-captcha.js (theme views are not
+ * overridden, avoiding conflicts with other plugins); verification runs in web.middleware before
+ * the business routes, so it does not interfere with advanced-user-management's override of /login.</p>
+ *
+ * @since 1.0.0
  */
 
 import { Context } from 'cordis';
@@ -134,7 +146,7 @@ export default async function easyCaptcha(context: Context): Promise<void> {
     }
     if (!result.counted) return void reject(res, role, result.message);
 
-    const fails = recordFailure(captchaDb, scope);
+    const fails = recordFailure(captchaDb, scope, now);
     if (fails >= config.maxFailures) {
       setBan(captchaDb, scope, now + config.banMinutes * 60 * 1000);
       return void reject(res, role, `人机验证错误次数过多，该账号已被暂时封禁 ${config.banMinutes} 分钟，请稍后再试。`);
@@ -187,6 +199,8 @@ export default async function easyCaptcha(context: Context): Promise<void> {
   const settingsSave: RequestHandler = wrap(async (req, res) => {
     try {
       const next = parseSettingsForm((req.body ?? {}) as Record<string, unknown>);
+      // “Turnstile 密钥留空保持不变”：表单未填写时沿用当前已保存密钥（设置页不回显密钥）。
+      if (!next.turnstile.secretKey) next.turnstile.secretKey = config.turnstile.secretKey;
       saveConfig(plugins, next);
       config = next;
       res.redirect(`${SETTINGS_URL}?notice=saved`);

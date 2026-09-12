@@ -1,8 +1,19 @@
 <!--
-  Author: MoyuZJ
-  Team: LinearTeam
-  Contact: linearteam@foxmail.com
-  人机验证 · 设置表单：验证方式（文本验证码 / Cloudflare Turnstile）+ 错误次数与封禁。
+  Easy Captcha Admin Settings View
+  Admin form that picks the verification method and tunes failure thresholds and bans.
+
+  Authors:
+  MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+
+  Copyright (C) 2026 Evarentha
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+<!--
+  Human-verification settings form: verification method (text captcha /
+  Cloudflare Turnstile) plus wrong-attempt thresholds and temporary bans.
+
+  @since 1.0.0
 -->
 
 <div class="ec-settings">
@@ -62,7 +73,7 @@
         <p class="eyebrow">Cloudflare Turnstile</p>
         <p class="ec-desc">在 Cloudflare Dashboard 创建站点后获取站点 ID 与密钥；是否弹出验证码由 Cloudflare 决定（无感通过时不要求用户操作）。</p>
         <div class="ec-field"><label>站点 ID（Site Key）</label><input type="text" name="turnstile_site_key" value="<%= config.turnstile.siteKey %>" placeholder="0x4AAAAAA... 开头" autocomplete="off"></div>
-        <div class="ec-field"><label>站点密钥（Secret Key，仅服务端使用）</label><input type="password" name="turnstile_secret_key" value="<%= config.turnstile.secretKey %>" placeholder="留空保持不变" autocomplete="off"></div>
+        <div class="ec-field"><label>站点密钥（Secret Key，仅服务端使用）</label><input type="password" name="turnstile_secret_key" placeholder="<%= config.turnstile.secretKey ? '已保存，留空保持不变' : '留空则不启用 Turnstile' %>" autocomplete="off"></div>
       </div>
     </div>
 

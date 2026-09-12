@@ -1,22 +1,32 @@
 /*
- * Author: MoyuZJ
- * Team: LinearTeam
- * Contact: linearteam@foxmail.com
- * Made by MoyuZJ in China with ♥
+ * Zero-Dependency PNG Captcha Generator
+ *
+ * Renders text captchas as PNG bitmaps without canvas, sharp, or other external dependencies.
+ *
+ * Authors:
+ * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
+ *
+ * Copyright (C) 2026 Evarentha
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * 普通文本验证码：生成 PNG 位图（无 canvas / sharp 等外部依赖）。
+ * Plain text captcha: generates a PNG bitmap (no canvas / sharp or other external dependencies).
  *
- * 字符以 5x7 网格线段字形（内置笔画字体）渲染到像素缓冲，再按 PNG 规范编码
- * （node:zlib deflate + CRC32），返回标准 image/png 数据。验证码文本只存在
- * 服务端会话中，图片为像素位图，无法通过读取 DOM 直接还原文本。
+ * <p>Characters are rendered into a pixel buffer as 5x7 grid stroke glyphs (built-in stroke font),
+ * then encoded per the PNG specification (node:zlib deflate + CRC32) and returned as standard
+ * image/png data. The captcha text exists only in the server-side session and the image is a
+ * pixel bitmap, so the text cannot be recovered by reading the DOM.</p>
  *
- * 可调参数：
- *  - length     文本个数（字符数）
- *  - charset    字符集：仅数字 / 仅字母 / 混合
- *  - complexity 复杂程度 1-3 → 干扰点与干扰线数量递增
- *  - distortion 变形程度 1-3 → 字符旋转角度 / 倾斜幅度递增
+ * Adjustable parameters:
+ * <ul>
+ * <li>length — number of characters in the text</li>
+ * <li>charset — digits only / letters only / mixed</li>
+ * <li>complexity 1-3 — more noise dots and interference lines</li>
+ * <li>distortion 1-3 — larger glyph rotation angles / skew amplitudes</li>
+ * </ul>
+ *
+ * @since 1.0.0
  */
 
 import zlib from 'node:zlib';
