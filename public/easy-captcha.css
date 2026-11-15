@@ -1,59 +1,24 @@
 /*
- * Easy Captcha Front-End Styles
+ * Easy Captcha Styles
  *
- * Styles the captcha widget injected into forms and the admin settings page.
+ * Captcha field and settings page; built on the core tokens.
  *
  * Authors:
- * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
- * worryzu <worryzu@gmail.com> @LinearTeam
+ * MoyuZJ <moyuzj@evarentha.com> @LinearTeam - Made in China with ♥
+ * worryzu <worryzu@evarentha.com> @LinearTeam
  *
  * Copyright (C) 2026 Evarentha
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-/*
- * Front-end styles for the easy-captcha plugin.
- *
- * Covers the captcha box injected into the login / register / comment forms
- * (.ec-box image, refresh button, answer input, Turnstile widget, hint) and
- * the admin settings page at admin/easy-captcha (.ec-settings panels,
- * switches, method radios, status pills, and actions).
- *
- * @since 1.0.0
- */
-
-/* ---------------- 人机验证注入块（登录 / 注册 / 评论表单） ---------------- */
-.ec-box{margin:14px 0 6px}
-.ec-box .ec-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.ec-box .ec-image{display:block;height:52px;border:1px solid #d4d4d8;border-radius:6px;background:#fff;cursor:pointer}
-.ec-box .ec-image.ec-error{filter:grayscale(.4);opacity:.6}
-.ec-box .ec-refresh{border:1px solid #d4d4d8;background:#fff;color:#3f3f46;padding:6px 12px;border-radius:6px;cursor:pointer;font:12px/1.4 Arial,sans-serif;white-space:nowrap}
-.ec-box .ec-refresh:hover{border-color:#18181b;color:#18181b}
-.ec-box .ec-input{width:100%;box-sizing:border-box}
-.ec-box .ec-turnstile-widget{min-height:65px}
-.ec-box .ec-hint{margin:6px 0 0;color:#b91c1c;font-size:12px}
-.ec-box .ec-hint[hidden]{display:none}
-
-/* ---------------- 后台设置页（admin/easy-captcha） ---------------- */
-.ec-settings h1{margin:0 0 4px;font:400 34px/1.1 Georgia,serif}
-.ec-settings .ec-sub{margin:0 0 22px;color:#71717a;font-size:13px}
-.ec-settings .ec-panel{margin:0 0 22px;padding:18px 20px;border:1px solid #e4e4e7;background:#fff}
-.ec-settings .ec-panel h2{margin:0 0 14px;font:700 13px/1 Arial,sans-serif;letter-spacing:.08em;color:#18181b}
-.ec-settings .ec-panel p.ec-desc{margin:0 0 12px;color:#71717a;font-size:12px;line-height:1.6}
-.ec-settings .ec-field{display:grid;gap:6px;margin:10px 0}
-.ec-settings .ec-field label{font-size:12px;color:#3f3f46}
-.ec-settings .ec-field input[type=number],.ec-settings .ec-field input[type=text],.ec-settings .ec-field select{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d4d4d8;border-radius:6px;background:#fff;font-size:13px}
-.ec-settings .ec-row-inputs{display:flex;gap:14px;flex-wrap:wrap}
-.ec-settings .ec-row-inputs .ec-field{flex:0 0 120px}
-.ec-settings .ec-switch{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px;color:#18181b;cursor:pointer}
-.ec-settings .ec-switch input{accent-color:#18181b}
-.ec-settings .ec-method{display:flex;gap:10px;margin:6px 0 4px}
-.ec-settings .ec-method label{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #d4d4d8;border-radius:6px;cursor:pointer;font-size:13px}
-.ec-settings .ec-method input{accent-color:#18181b}
-.ec-settings .ec-status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;margin:8px 0 4px}
-.ec-settings .ec-status.ec-ok{background:#dcfce7;color:#166534}
-.ec-settings .ec-status.ec-warn{background:#fef9c3;color:#854d0e}
-.ec-settings .ec-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
-.ec-settings .ec-actions button{border:0;background:#18181b;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px}
-.ec-settings .ec-actions button.ec-reset{background:transparent;color:#71717a;border:1px solid #d4d4d8}
-.ec-settings .ec-actions button:hover{opacity:.9}
+[data-lp-plugin="easy-captcha"] .ec-row { display: flex; gap: var(--lp-space-2); align-items: stretch; }
+[data-lp-plugin="easy-captcha"] .ec-row .input { flex: 1; min-width: 0; letter-spacing: .15em; text-transform: uppercase; }
+[data-lp-plugin="easy-captcha"] .ec-image { flex: none; padding: 0; border: 1px solid var(--lp-border-strong); border-radius: var(--lp-radius-md); background: #fff; cursor: pointer; overflow: hidden; line-height: 0; }
+[data-lp-plugin="easy-captcha"] .ec-image img { display: block; width: 120px; height: 40px; }
+[data-lp-plugin="easy-captcha"] .ec-image:focus-visible { outline: 2px solid var(--lp-focus); outline-offset: 2px; }
+[data-lp-plugin="easy-captcha"] .cf-turnstile { min-height: 65px; }
+[data-lp-plugin="easy-captcha"] .ec-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--lp-space-3); }
+[data-lp-plugin="easy-captcha"] .ec-preview { display: flex; align-items: center; gap: var(--lp-space-3); }
+[data-lp-plugin="easy-captcha"] .ec-preview img { border: 1px solid var(--lp-border); border-radius: var(--lp-radius-md); background: #fff; }
+[data-lp-plugin="easy-captcha"] .switch-row { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--lp-space-4); cursor: pointer; }
+[data-lp-plugin="easy-captcha"] .switch-row small { display: block; margin-top: 2px; font-size: var(--lp-text-xs); }

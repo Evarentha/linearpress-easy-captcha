@@ -4,8 +4,8 @@
  * Defines the plugin's config schema, defaults, normalization, and settings-form parsing.
  *
  * Authors:
- * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
- * worryzu <worryzu@gmail.com> @LinearTeam
+ * MoyuZJ <moyuzj@evarentha.com> @LinearTeam - Made in China with ♥
+ * worryzu <worryzu@evarentha.com> @LinearTeam
  *
  * Copyright (C) 2026 Evarentha
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -21,12 +21,6 @@
  *
  * @since 1.0.0
  */
-
-/** 插件注册表配置服务的最小接口（由 ctx.plugins 满足）。 */
-export interface PluginConfigService {
-  getConfig<T = unknown>(id: string): T | null;
-  setConfig(id: string, config: unknown): void;
-}
 
 /** 文本验证码字符集：仅数字 / 仅英文字母 / 两者混合。 */
 export type CaptchaCharset = 'number' | 'letter' | 'both';
@@ -86,8 +80,8 @@ const DEFAULT_CONFIG: EasyCaptchaConfig = {
     siteKey: '',
     secretKey: ''
   },
-  maxFailures: 5,
-  banMinutes: 10
+  maxFailures: 8,
+  banMinutes: 15
 };
 
 export function getDefaultConfig(): EasyCaptchaConfig { return structuredClone(DEFAULT_CONFIG); }
@@ -129,14 +123,6 @@ export function normalizeConfig(raw: unknown): EasyCaptchaConfig {
     maxFailures: asPositiveInt(input.maxFailures, defaults.maxFailures),
     banMinutes: asPositiveInt(input.banMinutes, defaults.banMinutes)
   };
-}
-
-export function loadConfig(plugins: PluginConfigService): EasyCaptchaConfig {
-  return normalizeConfig(plugins.getConfig<unknown>('easy-captcha'));
-}
-
-export function saveConfig(plugins: PluginConfigService, config: EasyCaptchaConfig): void {
-  plugins.setConfig('easy-captcha', config);
 }
 
 /**

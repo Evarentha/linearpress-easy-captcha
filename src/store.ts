@@ -1,91 +1,53 @@
 /*
- * Captcha Failure Counter and Ban Store
+ * Easy Captcha Attempt Store
  *
- * Tracks wrong-captcha counts and temporary bans in the plugin's local infrastructure database.
+ * Counts wrong answers per client IP and holds temporary lockouts.
  *
  * Authors:
- * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
- * worryzu <worryzu@gmail.com> @LinearTeam
+ * MoyuZJ <moyuzj@evarentha.com> @LinearTeam - Made in China with ♥
+ * worryzu <worryzu@evarentha.com> @LinearTeam
  *
  * Copyright (C) 2026 Evarentha
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * Captcha failure counts and ban records.
- *
- * <p>Data lives in the plugin's local infrastructure database (ctx.linearpress.db), decoupled from
- * the business database (which may be swapped to the MySQL driver); even if the database driver is
- * changed, human-verification state stays local.</p>
- *
- * Semantics (all timestamps are Date.now() milliseconds):
- * <ul>
- * <li>fails — currently accumulated wrong-captcha count; reset to zero once verification passes.</li>
- * <li>banUntil — when non-null and greater than the current time, the subject is temporarily
- * banned (all verification attempts rejected, even with correct input).</li>
- * </ul>
+ * <p>Keyed by IP, never by username: keying by the account being signed in to
+ * let anyone lock the owner out by typing wrong answers on purpose.</p>
  *
  * @since 1.0.0
  */
 
-export interface CaptchaDb {
-  exec(sql: string): void;
-  prepare(sql: string): {
-    run(...params: unknown[]): { changes?: number | bigint; lastInsertRowid?: number | bigint };
-    get(...params: unknown[]): unknown;
-    all(...params: unknown[]): unknown[];
-  };
+import type { DatabaseService } from 'linearpress/plugin-api';
+
+export interface Attempt { fails: number; banUntil: number | null; }
+
+export async function ensureSchema(db: DatabaseService): Promise<void> {
+  const mysql = db.dialect === 'mysql';
+  await db.exec(`CREATE TABLE IF NOT EXISTS ec_attempts (scope ${mysql ? 'VARCHAR(191)' : 'TEXT'} PRIMARY KEY, fails INT NOT NULL DEFAULT 0, ban_until BIGINT NULL, last_fail BIGINT NULL)`);
+  if (!await db.hasColumn('ec_attempts', 'last_fail')) await db.exec('ALTER TABLE ec_attempts ADD COLUMN last_fail BIGINT NULL');
 }
 
-export interface AttemptRow { fails: number; banUntil: number | null; }
-
-const MS = 60_000;
-
-export function ensureSchema(db: CaptchaDb): void {
-  db.exec(`CREATE TABLE IF NOT EXISTS ec_attempts (
-    scope TEXT PRIMARY KEY,
-    fails INTEGER NOT NULL DEFAULT 0,
-    ban_until INTEGER,
-    last_fail INTEGER
-  );`);
-  const columns = db.prepare("PRAGMA table_info('ec_attempts')").all() as Array<{ name: string }>;
-  if (!columns.some((column) => column.name === 'last_fail')) db.exec('ALTER TABLE ec_attempts ADD COLUMN last_fail INTEGER');
+export async function getAttempt(db: DatabaseService, scope: string): Promise<Attempt> {
+  const row = await db.get<{ fails: number; ban_until: number | null }>('SELECT fails, ban_until FROM ec_attempts WHERE scope = ?', scope);
+  return row ? { fails: Number(row.fails), banUntil: row.ban_until ? Number(row.ban_until) : null } : { fails: 0, banUntil: null };
 }
 
-export function getAttempt(db: CaptchaDb, scope: string): AttemptRow {
-  const row = db.prepare('SELECT fails, ban_until FROM ec_attempts WHERE scope=?').get(scope) as { fails?: number; ban_until?: number | null } | undefined;
-  if (!row) return { fails: 0, banUntil: null };
-  return { fails: Number(row.fails ?? 0), banUntil: row.ban_until ? Number(row.ban_until) : null };
+/** Add a failure and return the new count. Failures older than `windowMs` start a fresh count. */
+export async function recordFailure(db: DatabaseService, scope: string, now: number, windowMs: number): Promise<number> {
+  const current = await db.get<{ fails: number; last_fail: number | null }>('SELECT fails, last_fail FROM ec_attempts WHERE scope = ?', scope);
+  const fails = current && current.last_fail && now - Number(current.last_fail) < windowMs ? Number(current.fails) + 1 : 1;
+  await db.upsert('ec_attempts', { scope, fails, last_fail: now, ban_until: null }, ['scope'], ['fails', 'last_fail']);
+  return fails;
 }
 
-/** 记录一次失败并返回累计次数（首次自动创建行；now 写入 last_fail 活跃时间戳）。 */
-export function recordFailure(db: CaptchaDb, scope: string, now: number): number {
-  db.prepare('INSERT INTO ec_attempts(scope, fails, last_fail) VALUES(?, 1, ?) ON CONFLICT(scope) DO UPDATE SET fails = ec_attempts.fails + 1, last_fail = excluded.last_fail').run(scope, now);
-  const row = db.prepare('SELECT fails FROM ec_attempts WHERE scope=?').get(scope) as { fails?: number } | undefined;
-  return Number(row?.fails ?? 1);
-}
+export const setBan = (db: DatabaseService, scope: string, until: number) => db.upsert('ec_attempts', { scope, fails: 0, ban_until: until, last_fail: Date.now() }, ['scope'], ['fails', 'ban_until', 'last_fail']);
+export const clearScope = (db: DatabaseService, scope: string) => db.run('DELETE FROM ec_attempts WHERE scope = ?', scope);
+export const sweepExpired = (db: DatabaseService, now: number) => db.run('DELETE FROM ec_attempts WHERE (last_fail IS NULL OR last_fail < ?) AND (ban_until IS NULL OR ban_until < ?)', now - 86400_000, now);
 
-/** 设置封禁截止时间（毫秒时间戳）。 */
-export function setBan(db: CaptchaDb, scope: string, until: number): void {
-  db.prepare('INSERT INTO ec_attempts(scope, fails, ban_until) VALUES(?, 0, ?) ON CONFLICT(scope) DO UPDATE SET ban_until = excluded.ban_until').run(scope, until);
-}
-
-/** 验证通过：清除该主体的计数与过期封禁。 */
-export function clearScope(db: CaptchaDb, scope: string): void {
-  db.prepare('DELETE FROM ec_attempts WHERE scope=?').run(scope);
-}
-
-/** 清理陈旧行（由 Effect 定时调用，防止表膨胀）。 */
-export function sweepExpired(db: CaptchaDb, now: number): void {
-  // 24 小时内无失败记录且无生效封禁的行可安全删除（含一次性攻击者留下的残留计数）。
-  db.prepare('DELETE FROM ec_attempts WHERE (last_fail IS NULL OR last_fail < ?) AND (ban_until IS NULL OR ban_until < ?)').run(now - 24 * 60 * 60 * 1000, now);
-}
-
-/** 人类可读的剩余封禁时长（分钟），如「5 分钟」/「2 小时 3 分钟」。 */
-export function formatBanRemaining(ms: number): string {
-  const minutes = Math.max(1, Math.ceil(ms / MS));
+export function formatRemaining(ms: number): string {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
   if (minutes < 60) return `${minutes} 分钟`;
   const hours = Math.floor(minutes / 60);
-  const remain = minutes % 60;
-  return remain ? `${hours} 小时 ${remain} 分钟` : `${hours} 小时`;
+  return minutes % 60 ? `${hours} 小时 ${minutes % 60} 分钟` : `${hours} 小时`;
 }

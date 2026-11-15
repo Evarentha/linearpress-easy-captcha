@@ -4,8 +4,8 @@
  * Renders text captchas as PNG bitmaps without canvas, sharp, or other external dependencies.
  *
  * Authors:
- * MoyuZJ <moyuzj@moyuzj.cn> @LinearTeam - Made in China with ♥
- * worryzu <worryzu@gmail.com> @LinearTeam
+ * MoyuZJ <moyuzj@evarentha.com> @LinearTeam - Made in China with ♥
+ * worryzu <worryzu@evarentha.com> @LinearTeam
  *
  * Copyright (C) 2026 Evarentha
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -30,6 +30,7 @@
  * @since 1.0.0
  */
 
+import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import type { CaptchaCharset } from './config.js';
 
@@ -62,7 +63,8 @@ export function randomText(options: CaptchaOptions): string {
     : options.charset === 'letter' ? LETTERS
       : DIGITS + LETTERS;
   let out = '';
-  for (let i = 0; i < Math.max(1, options.length); i++) out += pool[rand(0, pool.length - 1)];
+  // The answer itself comes from a CSPRNG; Math.random is only used for visual noise.
+  for (let i = 0; i < Math.max(1, options.length); i++) out += pool[crypto.randomInt(pool.length)];
   return out;
 }
 
