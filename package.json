@@ -1,7 +1,7 @@
 {
   "name": "@evarentha/linearpress-easy-captcha",
-  "version": "3.0.0",
-  "description": "为登录、注册与评论提供人机验证：普通 PNG 文本验证码（复杂度/变形/字符数/字符集可调）或 Cloudflare Turnstile，验证码错误次数超限自动封禁账号。",
+  "version": "4.0.0",
+  "description": "在登录、注册和访客评论时要求验证：本站生成的图片验证码，或 Cloudflare Turnstile。反复输错会按 IP 暂停一段时间。",
   "type": "module",
   "main": "index.ts",
   "license": "GPL-3.0-or-later",
@@ -20,7 +20,7 @@
     "node": ">=22.0.0"
   },
   "peerDependencies": {
-    "linearpress": "^3.0.0"
+    "linearpress": "^4.0.0"
   },
   "publishConfig": {
     "access": "public"
